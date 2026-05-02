@@ -1,0 +1,12 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "${workspaceFolder:estudos-sql-oreilly}/database/rexon_metals.db",
+            "name": "Rexon Metals",
+            "group": "O'Reilly"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
+}
