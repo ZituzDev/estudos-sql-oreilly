@@ -6,6 +6,12 @@
             "database": "${workspaceFolder:estudos-sql-oreilly}/database/rexon_metals.db",
             "name": "Rexon Metals",
             "group": "O'Reilly"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "${workspaceFolder:estudos-sql-oreilly}/database/weather_stations.db",
+            "name": "Weather_station"
         }
     ],
     "sqltools.useNodeRuntime": true
