@@ -1,0 +1,112 @@
+-- 1.1 INNER JOIN Simples
+-- Retorna APENAS os clientes que possuem pedidos associados.
+-- Se um cliente nunca comprou nada, ele fica de fora deste resultado.
+SELECT ORDER_ID, CUSTOMER.CUSTOMER_ID, ORDER_DATE, SHIP_DATE, NAME, STREET_ADDRESS, CITY, STATE, ZIP, PRODUCT_ID, ORDER_QTY
+FROM CUSTOMER 
+INNER JOIN CUSTOMER_ORDER
+    ON CUSTOMER.CUSTOMER_ID = CUSTOMER_ORDER.CUSTOMER_ID;
+
+-- 1.2 LEFT JOIN Simples
+-- Retorna TODOS os clientes cadastrados, independentemente de terem feito pedidos ou não.
+-- Para clientes sem pedidos, os campos vindos da tabela CUSTOMER_ORDER retornarão vazios (NULL).
+SELECT ORDER_ID, CUSTOMER.CUSTOMER_ID, ORDER_DATE, SHIP_DATE, NAME, STREET_ADDRESS, CITY, STATE, ZIP, PRODUCT_ID, ORDER_QTY
+FROM CUSTOMER 
+LEFT JOIN CUSTOMER_ORDER
+    ON CUSTOMER.CUSTOMER_ID = CUSTOMER_ORDER.CUSTOMER_ID;
+
+-- 1.3 LEFT JOIN + Filtro NULL (Auditoria/Clientes Inativos)
+-- Filtra o resultado do LEFT JOIN para trazer EXCLUSIVAMENTE os clientes que NUNCA fizeram um pedido.
+SELECT CUSTOMER.CUSTOMER_ID, NAME AS CUSTOMER_NAME
+FROM CUSTOMER 
+LEFT JOIN CUSTOMER_ORDER
+    ON CUSTOMER.CUSTOMER_ID = CUSTOMER_ORDER.CUSTOMER_ID
+WHERE ORDER_ID IS NULL;
+
+
+-- --- PARTE 2: CONECTANDO MULTÍPLAS TABELAS (DOUBLE JOIN) ---
+
+-- 2.1 INNER JOIN com 3 Tabelas (Buscando Descrição do Produto)
+-- Une Cliente -> Pedido -> Produto para trazer dados cadastrais, da compra e o nome do item.
+-- Nota de estudo: Corrigido o relacionamento da tabela PRODUCT para mapear o PRODUCT_ID do pedido.
+SELECT ORDER_ID, CUSTOMER.CUSTOMER_ID, NAME AS CUSTOMER_NAME, STREET_ADDRESS, CITY, STATE, ZIP, ORDER_DATE, PRODUCT.PRODUCT_ID, DESCRIPTION, ORDER_QTY
+FROM CUSTOMER
+INNER JOIN CUSTOMER_ORDER
+    ON CUSTOMER_ORDER.CUSTOMER_ID = CUSTOMER.CUSTOMER_ID
+INNER JOIN PRODUCT
+    ON CUSTOMER_ORDER.PRODUCT_ID = PRODUCT.PRODUCT_ID;
+
+-- 2.2 Relatório de Faturamento por Item (Adicionando Conta Matemática)
+-- Além de unir as 3 tabelas, calcula a receita individual de cada pedido (Quantidade * Preço).
+SELECT ORDER_ID, CUSTOMER.CUSTOMER_ID, NAME AS CUSTOMER_NAME, STREET_ADDRESS, CITY, STATE, ZIP, ORDER_DATE, PRODUCT.PRODUCT_ID, DESCRIPTION, ORDER_QTY,
+       ORDER_QTY * PRICE AS REVENUE
+FROM CUSTOMER
+INNER JOIN CUSTOMER_ORDER
+    ON CUSTOMER.CUSTOMER_ID = CUSTOMER_ORDER.CUSTOMER_ID
+INNER JOIN PRODUCT
+    ON CUSTOMER_ORDER.PRODUCT_ID = PRODUCT.PRODUCT_ID;
+
+-- 2.3 Versão Definitiva (Tratando Ambiguidade de Colunas)
+-- O código acima com a segurança máxima: especificando a qual tabela pertence cada coluna no SELECT
+-- para evitar que o banco trave com o erro de "ambiguous column name".
+SELECT
+    CUSTOMER_ORDER.ORDER_ID, 
+    CUSTOMER.CUSTOMER_ID,
+    CUSTOMER.NAME AS CUSTOMER_NAME,
+    CUSTOMER.STREET_ADDRESS,
+    CUSTOMER.CITY,
+    CUSTOMER.STATE,
+    CUSTOMER.ZIP,
+    CUSTOMER_ORDER.ORDER_DATE,
+    CUSTOMER_ORDER.PRODUCT_ID,  
+    PRODUCT.DESCRIPTION,
+    CUSTOMER_ORDER.ORDER_QTY,  
+    CUSTOMER_ORDER.ORDER_QTY * PRODUCT.PRICE AS REVENUE 
+FROM CUSTOMER
+INNER JOIN CUSTOMER_ORDER
+    ON CUSTOMER.CUSTOMER_ID = CUSTOMER_ORDER.CUSTOMER_ID
+INNER JOIN PRODUCT
+    ON CUSTOMER_ORDER.PRODUCT_ID = PRODUCT.PRODUCT_ID;
+
+
+-- --- PARTE 3: RELATÓRIOS GERENCIAIS AVANÇADOS (JOINS + GROUP BY) ---
+
+-- 3.1 Total de Faturamento Acumulado por Cliente Ativo (INNER JOIN)
+-- Agrupa o histórico de compras e mostra o valor total investido por cada cliente no sistema.
+-- Exclui clientes sem compras devido ao INNER JOIN.
+SELECT
+    CUSTOMER.CUSTOMER_ID,
+    NAME AS CUSTOMER_NAME,
+    SUM(ORDER_QTY * PRICE) AS TOTAL_REVENUE
+FROM CUSTOMER_ORDER
+INNER JOIN CUSTOMER
+    ON CUSTOMER.CUSTOMER_ID = CUSTOMER_ORDER.CUSTOMER_ID
+INNER JOIN PRODUCT
+    ON CUSTOMER_ORDER.PRODUCT_ID = PRODUCT.PRODUCT_ID
+GROUP BY 1, 2;
+
+-- 3.2 Total de Faturamento Acumulado incluindo Clientes Inativos (LEFT JOIN)
+-- Garante a visualização de toda a base de clientes. Quem nunca comprou exibe o valor NULL.
+SELECT
+    CUSTOMER.CUSTOMER_ID,
+    NAME AS CUSTOMER_NAME,
+    SUM(ORDER_QTY * PRICE) AS TOTAL_REVENUE
+FROM CUSTOMER
+LEFT JOIN CUSTOMER_ORDER
+    ON CUSTOMER.CUSTOMER_ID = CUSTOMER_ORDER.CUSTOMER_ID
+LEFT JOIN PRODUCT
+    ON CUSTOMER_ORDER.PRODUCT_ID = PRODUCT.PRODUCT_ID
+GROUP BY 1, 2;
+
+-- 3.3 Relatório Final de Performance Comercial (LEFT JOIN + COALESCE)
+-- O ápice do capítulo: Lista todos os clientes e usa COALESCE para substituir o valor NULL por 0,
+-- gerando um relatório limpo e pronto para análise de Marketing/Vendas.
+SELECT
+    CUSTOMER.CUSTOMER_ID,
+    NAME AS CUSTOMER_NAME,
+    COALESCE(SUM(ORDER_QTY * PRICE), 0) AS TOTAL_REVENUE
+FROM CUSTOMER
+LEFT JOIN CUSTOMER_ORDER
+    ON CUSTOMER.CUSTOMER_ID = CUSTOMER_ORDER.CUSTOMER_ID
+LEFT JOIN PRODUCT
+    ON CUSTOMER_ORDER.PRODUCT_ID = PRODUCT.PRODUCT_ID
+GROUP BY 1, 2;
