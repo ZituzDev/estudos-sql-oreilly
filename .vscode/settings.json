@@ -12,6 +12,12 @@
             "driver": "SQLite",
             "database": "${workspaceFolder:estudos-sql-oreilly}/database/weather_stations.db",
             "name": "Weather_station"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "${workspaceFolder:estudos-sql-oreilly}/database/surgetech_conference.db",
+            "name": "surgetech_conference.db"
         }
     ],
     "sqltools.useNodeRuntime": true
